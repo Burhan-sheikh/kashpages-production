@@ -1,74 +1,45 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { ProtectedRoute } from '@/lib/auth/ProtectedRoute';
 import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
-import { useAuth } from '@/lib/auth/AuthContext';
-import { ProtectedRoute } from '@/lib/auth/ProtectedRoute';
 import { COLLECTIONS, PageDocument } from '@/lib/firebase/collections';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
+import { FileText, Eye, TrendingUp, Clock, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import {
-  Plus,
-  Eye,
-  Edit,
-  Trash2,
-  MoreVertical,
-  FileText,
-  Clock,
-  CheckCircle,
-} from 'lucide-react';
+import { formatNumber } from '@/lib/utils';
 import Link from 'next/link';
 
-function DashboardContent() {
-  const { user, userDoc } = useAuth();
+export default function DashboardPage() {
+  const { userDoc } = useAuth();
   const [pages, setPages] = useState<PageDocument[]>([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState({
-    total: 0,
-    published: 0,
-    draft: 0,
-    pending: 0,
-    totalViews: 0,
-  });
 
   useEffect(() => {
-    if (user) {
-      fetchPages();
+    if (userDoc) {
+      fetchUserPages();
     }
-  }, [user]);
+  }, [userDoc]);
 
-  const fetchPages = async () => {
+  const fetchUserPages = async () => {
+    if (!userDoc) return;
+
     try {
-      setLoading(true);
-      const q = query(
+      const pagesQuery = query(
         collection(db, COLLECTIONS.PAGES),
-        where('userId', '==', user?.uid),
+        where('userId', '==', userDoc.uid),
         orderBy('updatedAt', 'desc')
       );
 
-      const querySnapshot = await getDocs(q);
-      const pagesData = querySnapshot.docs.map(
-        (doc) => ({ id: doc.id, ...doc.data() } as PageDocument)
-      );
+      const snapshot = await getDocs(pagesQuery);
+      const pagesData = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as PageDocument[];
 
       setPages(pagesData);
-
-      // Calculate stats
-      const stats = pagesData.reduce(
-        (acc, page) => {
-          acc.total++;
-          if (page.status === 'published') acc.published++;
-          if (page.status === 'draft') acc.draft++;
-          if (page.status === 'pending_approval') acc.pending++;
-          acc.totalViews += page.views || 0;
-          return acc;
-        },
-        { total: 0, published: 0, draft: 0, pending: 0, totalViews: 0 }
-      );
-
-      setStats(stats);
     } catch (error) {
       console.error('Error fetching pages:', error);
     } finally {
@@ -76,180 +47,159 @@ function DashboardContent() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'published':
-        return <Badge variant="success">Published</Badge>;
-      case 'draft':
-        return <Badge variant="gray">Draft</Badge>;
-      case 'pending_approval':
-        return <Badge variant="warning">Pending Review</Badge>;
-      case 'archived':
-        return <Badge variant="danger">Archived</Badge>;
-      default:
-        return <Badge variant="gray">{status}</Badge>;
-    }
-  };
+  const stats = [
+    {
+      name: 'Total Pages',
+      value: userDoc?.stats.totalPages || 0,
+      icon: FileText,
+      color: 'bg-blue-500',
+    },
+    {
+      name: 'Published',
+      value: userDoc?.stats.publishedPages || 0,
+      icon: TrendingUp,
+      color: 'bg-green-500',
+    },
+    {
+      name: 'Total Views',
+      value: formatNumber(userDoc?.stats.totalViews || 0),
+      icon: Eye,
+      color: 'bg-purple-500',
+    },
+    {
+      name: 'Draft Pages',
+      value: (userDoc?.stats.totalPages || 0) - (userDoc?.stats.publishedPages || 0),
+      icon: Clock,
+      color: 'bg-yellow-500',
+    },
+  ];
 
-  return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">My Pages</h1>
-            <p className="text-gray-600 mt-1">Manage your landing pages</p>
-          </div>
-          <Link href="/dashboard/pages/new">
-            <Button leftIcon={<Plus className="h-5 w-5" />}>
-              Create new page
-            </Button>
-          </Link>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-          <Card>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Pages</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-              </div>
-              <FileText className="h-8 w-8 text-primary-600" />
-            </div>
-          </Card>
-
-          <Card>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Published</p>
-                <p className="text-2xl font-bold text-green-600">{stats.published}</p>
-              </div>
-              <CheckCircle className="h-8 w-8 text-green-600" />
-            </div>
-          </Card>
-
-          <Card>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Drafts</p>
-                <p className="text-2xl font-bold text-gray-600">{stats.draft}</p>
-              </div>
-              <Edit className="h-8 w-8 text-gray-600" />
-            </div>
-          </Card>
-
-          <Card>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
-              </div>
-              <Clock className="h-8 w-8 text-yellow-600" />
-            </div>
-          </Card>
-
-          <Card>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600">Total Views</p>
-                <p className="text-2xl font-bold text-primary-600">{stats.totalViews}</p>
-              </div>
-              <Eye className="h-8 w-8 text-primary-600" />
-            </div>
-          </Card>
-        </div>
-
-        {/* Pages List */}
-        {loading ? (
-          <div className="text-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          </div>
-        ) : pages.length > 0 ? (
-          <div className="space-y-4">
-            {pages.map((page) => (
-              <Card key={page.id} hover>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4 flex-1">
-                    {/* Thumbnail */}
-                    {page.thumbnail ? (
-                      <img
-                        src={page.thumbnail}
-                        alt={page.title}
-                        className="w-16 h-16 rounded-lg object-cover"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 bg-gradient-to-br from-primary-100 to-purple-100 rounded-lg flex items-center justify-center">
-                        <FileText className="h-6 w-6 text-primary-600" />
-                      </div>
-                    )}
-
-                    {/* Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <h3 className="text-lg font-semibold text-gray-900 truncate">
-                          {page.title}
-                        </h3>
-                        {getStatusBadge(page.status)}
-                      </div>
-                      <p className="text-sm text-gray-600 truncate">{page.description}</p>
-                      <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                        <span className="flex items-center">
-                          <Eye className="h-4 w-4 mr-1" />
-                          {page.views || 0} views
-                        </span>
-                        <span>
-                          Updated {new Date(page.updatedAt).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center space-x-2">
-                    <Link href={`/dashboard/pages/${page.id}/edit`}>
-                      <Button size="sm" variant="outline">
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit
-                      </Button>
-                    </Link>
-                    {page.isPublished && (
-                      <Link href={`/p/${page.slug}`} target="_blank">
-                        <Button size="sm" variant="ghost">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <Card className="text-center py-20">
-            <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              No pages yet
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Create your first landing page to get started
-            </p>
-            <Link href="/dashboard/pages/new">
-              <Button leftIcon={<Plus className="h-5 w-5" />}>
-                Create your first page
-              </Button>
-            </Link>
-          </Card>
-        )}
-      </div>
-    </div>
-  );
-}
-
-export default function Dashboard() {
   return (
     <ProtectedRoute>
-      <DashboardContent />
+      <DashboardLayout userRole="user">
+        {/* Welcome Section */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">
+            Welcome back, {userDoc?.displayName}! 👋
+          </h1>
+          <p className="mt-2 text-gray-600">
+            Here's an overview of your landing pages
+          </p>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {stats.map((stat) => {
+            const Icon = stat.icon;
+            return (
+              <div
+                key={stat.name}
+                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6"
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">{stat.name}</p>
+                    <p className="mt-2 text-3xl font-bold text-gray-900">{stat.value}</p>
+                  </div>
+                  <div className={`${stat.color} p-3 rounded-lg`}>
+                    <Icon className="h-6 w-6 text-white" />
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Recent Pages */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-gray-900">Recent Pages</h2>
+            <Link href="/dashboard/pages/new">
+              <Button size="sm" leftIcon={<Plus className="h-4 w-4" />}>
+                Create Page
+              </Button>
+            </Link>
+          </div>
+
+          <div className="p-6">
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+                <p className="mt-2 text-sm text-gray-500">Loading pages...</p>
+              </div>
+            ) : pages.length === 0 ? (
+              <div className="text-center py-12">
+                <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                  No pages yet
+                </h3>
+                <p className="text-gray-500 mb-6">
+                  Create your first landing page to get started
+                </p>
+                <Link href="/dashboard/pages/new">
+                  <Button leftIcon={<Plus className="h-4 w-4" />}>
+                    Create Your First Page
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {pages.slice(0, 5).map((page) => (
+                  <Link
+                    key={page.id}
+                    href={`/dashboard/pages/${page.id}`}
+                    className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-all"
+                  >
+                    <div className="flex items-center space-x-4">
+                      {page.thumbnail ? (
+                        <img
+                          src={page.thumbnail}
+                          alt={page.title}
+                          className="w-16 h-16 object-cover rounded-lg"
+                        />
+                      ) : (
+                        <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                          <FileText className="h-6 w-6 text-gray-400" />
+                        </div>
+                      )}
+                      <div>
+                        <h3 className="font-medium text-gray-900">{page.title}</h3>
+                        <p className="text-sm text-gray-500">
+                          {page.status.replace('_', ' ').toUpperCase()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-6 text-sm text-gray-500">
+                      <div className="flex items-center">
+                        <Eye className="h-4 w-4 mr-1" />
+                        {formatNumber(page.views)}
+                      </div>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        page.isPublished
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {page.isPublished ? 'Published' : 'Draft'}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+
+                {pages.length > 5 && (
+                  <div className="text-center pt-4">
+                    <Link
+                      href="/dashboard/pages"
+                      className="text-sm font-medium text-primary-600 hover:text-primary-700"
+                    >
+                      View all pages →
+                    </Link>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </DashboardLayout>
     </ProtectedRoute>
   );
 }
