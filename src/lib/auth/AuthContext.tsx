@@ -12,17 +12,18 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { auth, db } from '@/lib/firebase/config';
-import { UserRole, UserDocument, COLLECTIONS } from '@/lib/firebase/collections';
+import { COLLECTIONS, UserRole } from '@/lib/firebase/collections';
+import { UserProfile } from '@/types/platform';
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   user: User | null;
-  userDoc: UserDocument | null;
+  userDoc: UserProfile | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, displayName: string) => Promise<void>;
+  signUp: (email: string, password: string, displayName: string, username: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
@@ -35,9 +36,19 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [userDoc, setUserDoc] = useState<UserDocument | null>(null);
+  const [userDoc, setUserDoc] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+
+  // Generate unique username
+  const generateUsername = (displayName: string, uid: string): string => {
+    const baseUsername = displayName
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '')
+      .substring(0, 15);
+    const randomSuffix = Math.floor(Math.random() * 1000);
+    return `${baseUsername}${randomSuffix}`;
+  };
 
   // Fetch user document from Firestore
   const fetchUserDoc = async (uid: string) => {
@@ -46,30 +57,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userDocSnap = await getDoc(userDocRef);
       
       if (userDocSnap.exists()) {
-        setUserDoc(userDocSnap.data() as UserDocument);
+        setUserDoc(userDocSnap.data() as UserProfile);
         
         // Update last login
         await updateDoc(userDocRef, {
           lastLoginAt: serverTimestamp(),
         });
       } else {
-        // Create user document if it doesn't exist
-        const newUserDoc: UserDocument = {
+        // Create user document if it doesn't exist (for Google OAuth)
+        const username = generateUsername(user?.displayName || 'user', uid);
+        
+        const newUserDoc: UserProfile = {
           uid,
+          username,
           email: user?.email || '',
-          displayName: user?.displayName || null,
-          photoURL: user?.photoURL || null,
-          role: UserRole.USER,
+          displayName: user?.displayName || '',
           phone: null,
-          businessName: null,
+          photoURL: user?.photoURL || null,
+          bio: null,
+          role: UserRole.USER,
+          isVerified: false,
+          isBlocked: false,
           isEmailVerified: user?.emailVerified || false,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          lastLoginAt: new Date(),
-          isActive: true,
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+          lastLoginAt: Timestamp.now(),
           settings: {
             notifications: true,
             emailUpdates: true,
+            publicProfile: true,
           },
           stats: {
             totalPages: 0,
@@ -113,7 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Sign up with email and password
-  const signUp = async (email: string, password: string, displayName: string) => {
+  const signUp = async (email: string, password: string, displayName: string, username: string) => {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       
@@ -121,22 +137,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await updateProfile(userCredential.user, { displayName });
       
       // Create user document
-      const newUserDoc: UserDocument = {
+      const newUserDoc: UserProfile = {
         uid: userCredential.user.uid,
+        username,
         email,
         displayName,
-        photoURL: null,
-        role: UserRole.USER,
         phone: null,
-        businessName: null,
+        photoURL: null,
+        bio: null,
+        role: UserRole.USER,
+        isVerified: false,
+        isBlocked: false,
         isEmailVerified: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        lastLoginAt: new Date(),
-        isActive: true,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        lastLoginAt: Timestamp.now(),
         settings: {
           notifications: true,
           emailUpdates: true,
+          publicProfile: true,
         },
         stats: {
           totalPages: 0,
