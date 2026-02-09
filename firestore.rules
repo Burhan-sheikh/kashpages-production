@@ -32,6 +32,9 @@ service cloud.firestore {
                      isOwner(resource.data.userId) || 
                      isAdmin();
       
+      // Allow read for slug availability check (any authenticated user)
+      allow list: if isSignedIn();
+      
       // Only authenticated users can create pages
       allow create: if isSignedIn() && 
                        request.resource.data.userId == request.auth.uid &&
