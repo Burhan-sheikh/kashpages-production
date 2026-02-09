@@ -1,10 +1,8 @@
-'use client';
-
-import { initializeApp, getApps } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
-import { getDatabase } from 'firebase/database';
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import { getAuth, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore';
+import { getDatabase, Database } from 'firebase/database';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -16,19 +14,26 @@ const firebaseConfig = {
   databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
 };
 
-// Initialize Firebase only on client side
-let app;
-let auth;
-let db;
-let storage;
-let rtdb;
+// Initialize Firebase
+let app: FirebaseApp;
+let auth: Auth;
+let firestore: Firestore;
+let realtimeDb: Database;
+let storage: FirebaseStorage;
 
-if (typeof window !== 'undefined') {
-  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+if (!getApps().length) {
+  app = initializeApp(firebaseConfig);
   auth = getAuth(app);
-  db = getFirestore(app);
+  firestore = getFirestore(app);
+  realtimeDb = getDatabase(app);
   storage = getStorage(app);
-  rtdb = getDatabase(app);
+} else {
+  app = getApps()[0];
+  auth = getAuth(app);
+  firestore = getFirestore(app);
+  realtimeDb = getDatabase(app);
+  storage = getStorage(app);
 }
 
-export { app, auth, db, storage, rtdb };
+export { app, auth, firestore, realtimeDb, storage };
+export default app;
