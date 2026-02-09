@@ -1,0 +1,61 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    
+    "publicPages": {
+      ".read": true,
+      ".indexOn": ["slug", "category", "location", "status", "createdAt"],
+      "$pageId": {
+        ".read": true,
+        ".write": "auth != null && (data.child('userId').val() === auth.uid || root.child('admins').child(auth.uid).exists())",
+        ".validate": "newData.hasChildren(['title', 'slug', 'userId', 'status'])"
+      }
+    },
+    
+    "users": {
+      "$userId": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $userId",
+        ".validate": "newData.hasChildren(['email', 'displayName', 'createdAt'])"
+      }
+    },
+    
+    "analytics": {
+      "$pageId": {
+        ".read": "auth != null && (root.child('publicPages').child($pageId).child('userId').val() === auth.uid || root.child('admins').child(auth.uid).exists())",
+        ".write": false,
+        "views": {
+          ".indexOn": [".value"]
+        },
+        "dailyViews": {
+          ".indexOn": ["date"]
+        }
+      }
+    },
+    
+    "categories": {
+      ".read": true,
+      ".write": "root.child('admins').child(auth.uid).exists()",
+      ".indexOn": ["name", "slug"]
+    },
+    
+    "locations": {
+      ".read": true,
+      ".write": "root.child('admins').child(auth.uid).exists()",
+      ".indexOn": ["name", "slug"]
+    },
+    
+    "admins": {
+      ".read": "root.child('admins').child(auth.uid).exists()",
+      ".write": false
+    },
+    
+    "pageViews": {
+      "$viewId": {
+        ".read": false,
+        ".write": false
+      }
+    }
+  }
+}

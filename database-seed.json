@@ -1,0 +1,216 @@
+{
+  "categories": {
+    "restaurant": {
+      "id": "restaurant",
+      "name": "Restaurant & Cafe",
+      "slug": "restaurant",
+      "description": "Restaurants, cafes, food trucks, and dining establishments",
+      "icon": "🍽️",
+      "count": 0,
+      "featured": true,
+      "order": 1
+    },
+    "retail": {
+      "id": "retail",
+      "name": "Retail & Shopping",
+      "slug": "retail",
+      "description": "Stores, boutiques, and retail shops",
+      "icon": "🛍️",
+      "count": 0,
+      "featured": true,
+      "order": 2
+    },
+    "services": {
+      "id": "services",
+      "name": "Services",
+      "slug": "services",
+      "description": "Professional services, consultants, and service providers",
+      "icon": "💼",
+      "count": 0,
+      "featured": true,
+      "order": 3
+    },
+    "hospitality": {
+      "id": "hospitality",
+      "name": "Hotels & Stay",
+      "slug": "hospitality",
+      "description": "Hotels, guesthouses, and accommodations",
+      "icon": "🏨",
+      "count": 0,
+      "featured": true,
+      "order": 4
+    },
+    "healthcare": {
+      "id": "healthcare",
+      "name": "Healthcare",
+      "slug": "healthcare",
+      "description": "Clinics, hospitals, and healthcare providers",
+      "icon": "🏥",
+      "count": 0,
+      "featured": false,
+      "order": 5
+    },
+    "education": {
+      "id": "education",
+      "name": "Education",
+      "slug": "education",
+      "description": "Schools, coaching centers, and educational institutions",
+      "icon": "🎓",
+      "count": 0,
+      "featured": false,
+      "order": 6
+    },
+    "tourism": {
+      "id": "tourism",
+      "name": "Tourism & Travel",
+      "slug": "tourism",
+      "description": "Tour operators, travel agencies, and tourism services",
+      "icon": "✈️",
+      "count": 0,
+      "featured": false,
+      "order": 7
+    },
+    "crafts": {
+      "id": "crafts",
+      "name": "Arts & Crafts",
+      "slug": "crafts",
+      "description": "Handicrafts, artisans, and traditional crafts",
+      "icon": "🎨",
+      "count": 0,
+      "featured": false,
+      "order": 8
+    }
+  },
+  
+  "locations": {
+    "srinagar": {
+      "id": "srinagar",
+      "name": "Srinagar",
+      "slug": "srinagar",
+      "district": "Srinagar",
+      "region": "Kashmir Valley",
+      "description": "Summer capital of Jammu and Kashmir",
+      "count": 0,
+      "featured": true,
+      "order": 1
+    },
+    "jammu": {
+      "id": "jammu",
+      "name": "Jammu",
+      "slug": "jammu",
+      "district": "Jammu",
+      "region": "Jammu Division",
+      "description": "Winter capital of Jammu and Kashmir",
+      "count": 0,
+      "featured": true,
+      "order": 2
+    },
+    "anantnag": {
+      "id": "anantnag",
+      "name": "Anantnag",
+      "slug": "anantnag",
+      "district": "Anantnag",
+      "region": "Kashmir Valley",
+      "description": "Historic town in South Kashmir",
+      "count": 0,
+      "featured": true,
+      "order": 3
+    },
+    "baramulla": {
+      "id": "baramulla",
+      "name": "Baramulla",
+      "slug": "baramulla",
+      "district": "Baramulla",
+      "region": "Kashmir Valley",
+      "description": "Gateway to Kashmir Valley",
+      "count": 0,
+      "featured": false,
+      "order": 4
+    },
+    "budgam": {
+      "id": "budgam",
+      "name": "Budgam",
+      "slug": "budgam",
+      "district": "Budgam",
+      "region": "Kashmir Valley",
+      "description": "Central Kashmir district",
+      "count": 0,
+      "featured": false,
+      "order": 5
+    },
+    "pulwama": {
+      "id": "pulwama",
+      "name": "Pulwama",
+      "slug": "pulwama",
+      "district": "Pulwama",
+      "region": "Kashmir Valley",
+      "description": "Known for saffron cultivation",
+      "count": 0,
+      "featured": false,
+      "order": 6
+    },
+    "shopian": {
+      "id": "shopian",
+      "name": "Shopian",
+      "slug": "shopian",
+      "district": "Shopian",
+      "region": "Kashmir Valley",
+      "description": "Apple bowl of Kashmir",
+      "count": 0,
+      "featured": false,
+      "order": 7
+    },
+    "kupwara": {
+      "id": "kupwara",
+      "name": "Kupwara",
+      "slug": "kupwara",
+      "district": "Kupwara",
+      "region": "Kashmir Valley",
+      "description": "Northern Kashmir district",
+      "count": 0,
+      "featured": false,
+      "order": 8
+    },
+    "bandipora": {
+      "id": "bandipora",
+      "name": "Bandipora",
+      "slug": "bandipora",
+      "district": "Bandipora",
+      "region": "Kashmir Valley",
+      "description": "Near Wular Lake",
+      "count": 0,
+      "featured": false,
+      "order": 9
+    },
+    "ganderbal": {
+      "id": "ganderbal",
+      "name": "Ganderbal",
+      "slug": "ganderbal",
+      "district": "Ganderbal",
+      "region": "Kashmir Valley",
+      "description": "Gateway to Sonamarg",
+      "count": 0,
+      "featured": false,
+      "order": 10
+    },
+    "kulgam": {
+      "id": "kulgam",
+      "name": "Kulgam",
+      "slug": "kulgam",
+      "district": "Kulgam",
+      "region": "Kashmir Valley",
+      "description": "South Kashmir district",
+      "count": 0,
+      "featured": false,
+      "order": 11
+    }
+  },
+  
+  "admins": {
+    "REPLACE_WITH_YOUR_UID": {
+      "email": "admin@kashpages.com",
+      "role": "super_admin",
+      "createdAt": 1707504000000
+    }
+  }
+}

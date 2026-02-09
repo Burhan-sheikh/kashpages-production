@@ -5,7 +5,7 @@ import { Loader2 } from 'lucide-react';
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
-  isLoading?: boolean;
+  loading?: boolean; // Changed from isLoading to match usage
   leftIcon?: ReactNode;
   rightIcon?: ReactNode;
   children: ReactNode;
@@ -14,7 +14,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 export function Button({
   variant = 'primary',
   size = 'md',
-  isLoading = false,
+  loading = false, // Changed from isLoading
   leftIcon,
   rightIcon,
   children,
@@ -41,10 +41,11 @@ export function Button({
   return (
     <button
       className={cn(baseStyles, variants[variant], sizes[size], className)}
-      disabled={disabled || isLoading}
+      disabled={disabled || loading}
+      aria-busy={loading ? 'true' : 'false'}
       {...props}
     >
-      {isLoading ? (
+      {loading ? (
         <>
           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           Loading...

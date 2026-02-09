@@ -1,0 +1,103 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && 
+             exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    
+    // User profiles
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId) || isAdmin();
+    }
+    
+    // Pages - Main landing pages
+    match /pages/{pageId} {
+      // Public pages can be read by anyone
+      allow read: if resource.data.status == 'published' || 
+                     isOwner(resource.data.userId) || 
+                     isAdmin();
+      
+      // Only authenticated users can create pages
+      allow create: if isSignedIn() && 
+                       request.resource.data.userId == request.auth.uid &&
+                       request.resource.data.keys().hasAll(['title', 'slug', 'userId', 'status', 'createdAt']);
+      
+      // Only owner can update their pages
+      allow update: if isOwner(resource.data.userId) &&
+                       request.resource.data.userId == resource.data.userId; // Prevent userId change
+      
+      // Only owner or admin can delete
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+    
+    // Page analytics
+    match /analytics/{pageId} {
+      allow read: if isSignedIn() && 
+                     exists(/databases/$(database)/documents/pages/$(pageId)) &&
+                     get(/databases/$(database)/documents/pages/$(pageId)).data.userId == request.auth.uid;
+      
+      allow write: if false; // Analytics written by Cloud Functions only
+    }
+    
+    // Categories
+    match /categories/{categoryId} {
+      allow read: if true; // Public
+      allow write: if isAdmin();
+    }
+    
+    // Locations
+    match /locations/{locationId} {
+      allow read: if true; // Public
+      allow write: if isAdmin();
+    }
+    
+    // Templates
+    match /templates/{templateId} {
+      allow read: if true; // Public
+      allow write: if isAdmin();
+    }
+    
+    // Featured pages
+    match /featured/{featuredId} {
+      allow read: if true; // Public
+      allow write: if isAdmin();
+    }
+    
+    // Admin users list
+    match /admins/{userId} {
+      allow read: if isAdmin();
+      allow write: if false; // Set manually
+    }
+    
+    // Page views (incremented by Cloud Functions)
+    match /pageViews/{viewId} {
+      allow read: if isSignedIn();
+      allow write: if false; // Written by Cloud Functions
+    }
+    
+    // Contact form submissions
+    match /contacts/{contactId} {
+      allow read: if isAdmin();
+      allow create: if request.resource.data.keys().hasAll(['name', 'email', 'message', 'timestamp']) &&
+                       request.resource.data.name is string &&
+                       request.resource.data.email is string &&
+                       request.resource.data.message is string;
+      allow update, delete: if false;
+    }
+  }
+}
