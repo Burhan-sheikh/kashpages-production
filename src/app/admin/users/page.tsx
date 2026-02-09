@@ -1,35 +1,34 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { collection, getDocs, updateDoc, doc } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
+import { useEffect, useState } from 'react';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { ProtectedRoute } from '@/lib/auth/ProtectedRoute';
-import { UserRole, COLLECTIONS, UserDocument } from '@/lib/firebase/collections';
-import { Card } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
+import { UserRole, UserDocument, COLLECTIONS } from '@/lib/firebase/collections';
+import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
+import { Users, Search, Shield, User, Ban, Check } from 'lucide-react';
+import { formatDate } from '@/lib/utils';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { Search, Shield, User, Mail, Calendar, MoreVertical } from 'lucide-react';
 
-function UserManagementContent() {
-  const [users, setUsers] = useState<(UserDocument & { id: string })[]>([]);
+export default function UsersManagementPage() {
+  const [users, setUsers] = useState<UserDocument[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<UserDocument[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState<'all' | UserRole>('all');
 
   useEffect(() => {
     fetchUsers();
   }, []);
 
+  useEffect(() => {
+    filterUsers();
+  }, [users, searchQuery, roleFilter]);
+
   const fetchUsers = async () => {
     try {
-      setLoading(true);
-      const usersSnapshot = await getDocs(collection(db, COLLECTIONS.USERS));
-      const usersData = usersSnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as (UserDocument & { id: string })[];
+      const snapshot = await getDocs(collection(db, COLLECTIONS.USERS));
+      const usersData = snapshot.docs.map((doc) => doc.data()) as UserDocument[];
       setUsers(usersData);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -38,191 +37,164 @@ function UserManagementContent() {
     }
   };
 
-  const handleRoleChange = async (userId: string, newRole: UserRole) => {
+  const filterUsers = () => {
+    let filtered = users;
+
+    if (searchQuery) {
+      filtered = filtered.filter(
+        (user) =>
+          user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          user.displayName?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    if (roleFilter !== 'all') {
+      filtered = filtered.filter((user) => user.role === roleFilter);
+    }
+
+    setFilteredUsers(filtered);
+  };
+
+  const handleToggleActive = async (user: UserDocument) => {
     try {
-      await updateDoc(doc(db, COLLECTIONS.USERS, userId), {
+      await updateDoc(doc(db, COLLECTIONS.USERS, user.uid), {
+        isActive: !user.isActive,
+      });
+      fetchUsers();
+    } catch (error) {
+      console.error('Error updating user:', error);
+      alert('Failed to update user');
+    }
+  };
+
+  const handleChangeRole = async (user: UserDocument, newRole: UserRole) => {
+    if (!confirm(`Change user role to ${newRole}?`)) return;
+
+    try {
+      await updateDoc(doc(db, COLLECTIONS.USERS, user.uid), {
         role: newRole,
-        updatedAt: new Date(),
       });
       fetchUsers();
     } catch (error) {
       console.error('Error updating role:', error);
-    }
-  };
-
-  const handleToggleActive = async (userId: string, isActive: boolean) => {
-    try {
-      await updateDoc(doc(db, COLLECTIONS.USERS, userId), {
-        isActive: !isActive,
-        updatedAt: new Date(),
-      });
-      fetchUsers();
-    } catch (error) {
-      console.error('Error toggling active status:', error);
-    }
-  };
-
-  const filteredUsers = users.filter((user) => {
-    const matchesSearch =
-      user.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-    return matchesSearch && matchesRole;
-  });
-
-  const getRoleBadge = (role: UserRole) => {
-    switch (role) {
-      case UserRole.ADMIN:
-        return <Badge variant="danger">Admin</Badge>;
-      case UserRole.USER:
-        return <Badge variant="primary">User</Badge>;
-      default:
-        return <Badge variant="gray">Guest</Badge>;
+      alert('Failed to update role');
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-          <p className="text-gray-600 mt-1">Manage user accounts and permissions</p>
+    <ProtectedRoute requiredRole={UserRole.ADMIN}>
+      <DashboardLayout userRole="admin">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Manage users, roles, and permissions
+          </p>
         </div>
 
         {/* Filters */}
-        <div className="mb-6 flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <Input
-              placeholder="Search users..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              leftIcon={<Search className="h-5 w-5" />}
-            />
-          </div>
-          <div className="w-full md:w-64">
-            <Select
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+          <div className="flex flex-col md:flex-row md:items-center md:space-x-4 space-y-4 md:space-y-0">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search users..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+            </div>
+            <select
               value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              options={[
-                { value: 'all', label: 'All Roles' },
-                { value: UserRole.ADMIN, label: 'Admin' },
-                { value: UserRole.USER, label: 'User' },
-              ]}
-            />
+              onChange={(e) => setRoleFilter(e.target.value as any)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="all">All Roles</option>
+              <option value={UserRole.USER}>Users</option>
+              <option value={UserRole.ADMIN}>Admins</option>
+            </select>
           </div>
         </div>
 
         {/* Users Table */}
-        {loading ? (
-          <div className="text-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-          </div>
-        ) : (
-          <Card padding="none">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+            </div>
+          ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      User
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Role
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Joined
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Pages
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
-                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pages</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Joined</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-200">
                   {filteredUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
+                    <tr key={user.uid} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
                         <div className="flex items-center">
-                          <div className="h-10 w-10 flex-shrink-0">
-                            {user.photoURL ? (
-                              <img
-                                src={user.photoURL}
-                                alt={user.displayName || ''}
-                                className="h-10 w-10 rounded-full"
-                              />
-                            ) : (
-                              <div className="h-10 w-10 rounded-full bg-primary-600 flex items-center justify-center">
-                                <span className="text-white font-medium">
-                                  {user.displayName?.[0] || 'U'}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                          <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
-                              {user.displayName || 'No name'}
+                          {user.photoURL ? (
+                            <img src={user.photoURL} alt="" className="h-10 w-10 rounded-full mr-3" />
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
+                              <User className="h-6 w-6 text-gray-400" />
                             </div>
+                          )}
+                          <div>
+                            <div className="font-medium text-gray-900">{user.displayName || 'No name'}</div>
                             <div className="text-sm text-gray-500">{user.email}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {getRoleBadge(user.role)}
+                      <td className="px-6 py-4">
+                        <select
+                          value={user.role}
+                          onChange={(e) => handleChangeRole(user, e.target.value as UserRole)}
+                          className="text-sm border border-gray-300 rounded px-2 py-1"
+                        >
+                          <option value={UserRole.USER}>User</option>
+                          <option value={UserRole.ADMIN}>Admin</option>
+                        </select>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        {user.isActive ? (
-                          <Badge variant="success">Active</Badge>
-                        ) : (
-                          <Badge variant="danger">Suspended</Badge>
-                        )}
+                      <td className="px-6 py-4">
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          user.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        }`}>
+                          {user.isActive ? 'Active' : 'Suspended'}
+                        </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {user.createdAt?.toDate?.()?.toLocaleDateString() || 'N/A'}
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        {user.stats.totalPages}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {user.stats?.totalPages || 0}
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {formatDate(user.createdAt)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex items-center space-x-2">
-                          <select
-                            value={user.role}
-                            onChange={(e) => handleRoleChange(user.id, e.target.value as UserRole)}
-                            className="text-sm border border-gray-300 rounded px-2 py-1"
-                          >
-                            <option value={UserRole.USER}>User</option>
-                            <option value={UserRole.ADMIN}>Admin</option>
-                          </select>
-                          <Button
-                            size="sm"
-                            variant={user.isActive ? 'danger' : 'secondary'}
-                            onClick={() => handleToggleActive(user.id, user.isActive)}
-                          >
-                            {user.isActive ? 'Suspend' : 'Activate'}
-                          </Button>
-                        </div>
+                      <td className="px-6 py-4 text-right">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleToggleActive(user)}
+                        >
+                          {user.isActive ? 'Suspend' : 'Activate'}
+                        </Button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </Card>
-        )}
-      </div>
-    </div>
-  );
-}
-
-export default function UserManagement() {
-  return (
-    <ProtectedRoute requiredRole={UserRole.ADMIN}>
-      <UserManagementContent />
+          )}
+        </div>
+      </DashboardLayout>
     </ProtectedRoute>
   );
 }
