@@ -1,5 +1,6 @@
-import React, { forwardRef } from 'react';
-import clsx from 'clsx';
+'use client';
+
+import React from 'react';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -9,7 +10,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   rightIcon?: React.ReactNode;
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
+export const Input = React.forwardRef<HTMLInputElement, InputProps>(
   (
     {
       label,
@@ -17,45 +18,39 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       helperText,
       leftIcon,
       rightIcon,
-      className,
-      id,
+      className = '',
       ...props
     },
     ref
   ) => {
-    const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
-
     return (
       <div className="w-full">
         {label && (
-          <label
-            htmlFor={inputId}
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             {label}
           </label>
         )}
         <div className="relative">
           {leftIcon && (
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
               {leftIcon}
             </div>
           )}
           <input
             ref={ref}
-            id={inputId}
-            className={clsx(
-              'block w-full rounded-lg border-gray-300 shadow-sm transition-colors',
-              'focus:border-primary-500 focus:ring-primary-500',
-              error && 'border-red-500 focus:border-red-500 focus:ring-red-500',
-              leftIcon && 'pl-10',
-              rightIcon && 'pr-10',
-              className
-            )}
+            className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
+              error
+                ? 'border-red-500 focus:ring-red-500'
+                : 'border-gray-300 focus:ring-primary-500 focus:border-primary-500'
+            } ${
+              leftIcon ? 'pl-10' : ''
+            } ${
+              rightIcon ? 'pr-10' : ''
+            } ${className}`}
             {...props}
           />
           {rightIcon && (
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
               {rightIcon}
             </div>
           )}
