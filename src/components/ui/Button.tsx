@@ -1,31 +1,30 @@
-import React from 'react';
+import { ButtonHTMLAttributes, ReactNode } from 'react';
+import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
-import clsx from 'clsx';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
   size?: 'sm' | 'md' | 'lg';
   isLoading?: boolean;
-  leftIcon?: React.ReactNode;
-  rightIcon?: React.ReactNode;
-  fullWidth?: boolean;
+  leftIcon?: ReactNode;
+  rightIcon?: ReactNode;
+  children: ReactNode;
 }
 
 export function Button({
-  children,
   variant = 'primary',
   size = 'md',
   isLoading = false,
   leftIcon,
   rightIcon,
-  fullWidth = false,
+  children,
   className,
   disabled,
   ...props
 }: ButtonProps) {
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
   
-  const variantStyles = {
+  const variants = {
     primary: 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500',
     secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500',
     outline: 'border-2 border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-500',
@@ -33,7 +32,7 @@ export function Button({
     danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
   };
   
-  const sizeStyles = {
+  const sizes = {
     sm: 'px-3 py-1.5 text-sm',
     md: 'px-4 py-2 text-base',
     lg: 'px-6 py-3 text-lg',
@@ -41,23 +40,22 @@ export function Button({
 
   return (
     <button
-      className={clsx(
-        baseStyles,
-        variantStyles[variant],
-        sizeStyles[size],
-        fullWidth && 'w-full',
-        className
-      )}
+      className={cn(baseStyles, variants[variant], sizes[size], className)}
       disabled={disabled || isLoading}
       {...props}
     >
       {isLoading ? (
-        <Loader2 className="h-5 w-5 animate-spin mr-2" />
+        <>
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Loading...
+        </>
       ) : (
-        leftIcon && <span className="mr-2">{leftIcon}</span>
+        <>
+          {leftIcon && <span className="mr-2">{leftIcon}</span>}
+          {children}
+          {rightIcon && <span className="ml-2">{rightIcon}</span>}
+        </>
       )}
-      {children}
-      {rightIcon && !isLoading && <span className="ml-2">{rightIcon}</span>}
     </button>
   );
 }

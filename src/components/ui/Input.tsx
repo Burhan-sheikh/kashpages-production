@@ -1,27 +1,33 @@
-import React from 'react';
-import clsx from 'clsx';
+import { InputHTMLAttributes, ReactNode } from 'react';
+import { cn } from '@/lib/utils';
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
-  error?: string;
   helperText?: string;
-  leftIcon?: React.ReactNode;
-  rightIcon?: React.ReactNode;
+  error?: string;
+  leftIcon?: ReactNode;
+  rightIcon?: ReactNode;
 }
 
 export function Input({
   label,
-  error,
   helperText,
+  error,
   leftIcon,
   rightIcon,
   className,
+  id,
   ...props
 }: InputProps) {
+  const inputId = id || label?.toLowerCase().replace(/\s+/g, '-');
+
   return (
     <div className="w-full">
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label
+          htmlFor={inputId}
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
           {label}
           {props.required && <span className="text-red-500 ml-1">*</span>}
         </label>
@@ -35,11 +41,16 @@ export function Input({
         )}
         
         <input
-          className={clsx(
-            'block w-full rounded-lg border border-gray-300 px-4 py-2 text-gray-900 placeholder-gray-400 focus:border-primary-500 focus:ring-2 focus:ring-primary-500 focus:outline-none transition-colors',
+          id={inputId}
+          className={cn(
+            'w-full px-4 py-2 border rounded-lg transition-colors',
+            'focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent',
+            'disabled:bg-gray-100 disabled:cursor-not-allowed',
+            error
+              ? 'border-red-300 focus:ring-red-500'
+              : 'border-gray-300',
             leftIcon && 'pl-10',
             rightIcon && 'pr-10',
-            error && 'border-red-500 focus:border-red-500 focus:ring-red-500',
             className
           )}
           {...props}
