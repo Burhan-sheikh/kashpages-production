@@ -1,238 +1,260 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState } from 'use';
+import { useAuth } from '@/lib/auth/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Save, Eye, CheckCircle, XCircle, Loader } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import {
-  checkSlugAvailability,
-  generateSlugFromTitle,
-  suggestAlternativeSlugs,
-} from '@/lib/utils/slugValidator';
+import { PagesService } from '@/services/pages.service';
+import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { PageDocument } from '@/types/platform';
 
 export default function NewPagePage() {
+  const { user, userDoc } = useAuth();
   const router = useRouter();
-  const [saving, setSaving] = useState(false);
-  const [checkingSlug, setCheckingSlug] = useState(false);
-  const [slugStatus, setSlugStatus] = useState<{
-    available: boolean | null;
-    message: string;
-  }>({ available: null, message: '' });
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
-    slug: '',
-    category: '',
     description: '',
+    category: 'restaurant',
+    city: '',
+    district: '',
+    phone: '',
+    email: '',
   });
-
-  // Auto-generate slug from title
-  useEffect(() => {
-    if (formData.title && !formData.slug) {
-      const generatedSlug = generateSlugFromTitle(formData.title);
-      setFormData((prev) => ({ ...prev, slug: generatedSlug }));
-    }
-  }, [formData.title]);
-
-  // Check slug availability with debounce
-  useEffect(() => {
-    if (!formData.slug || formData.slug.length < 3) {
-      setSlugStatus({ available: null, message: '' });
-      setSuggestions([]);
-      return;
-    }
-
-    const timeoutId = setTimeout(async () => {
-      setCheckingSlug(true);
-      const result = await checkSlugAvailability(formData.slug);
-      setSlugStatus(result);
-      setCheckingSlug(false);
-
-      // If slug is taken, suggest alternatives
-      if (!result.available) {
-        const alternatives = await suggestAlternativeSlugs(formData.slug);
-        setSuggestions(alternatives);
-      } else {
-        setSuggestions([]);
-      }
-    }, 500);
-
-    return () => clearTimeout(timeoutId);
-  }, [formData.slug]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Validate slug is available
-    if (!slugStatus.available) {
-      alert('Please choose an available slug before saving.');
-      return;
+    
+    if (!user || !userDoc) return;
+    
+    try {
+      setLoading(true);
+      
+      const slug = `${userDoc.username || user.uid}/${formData.title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')}`;
+      
+      const pageId = await PagesService.createPage(user.uid, {
+        title: formData.title,
+        slug,
+        description: formData.description,
+        ownerName: userDoc.displayName,
+        category: formData.category,
+        address: {
+          addressLine1: '',
+          addressLine2: null,
+          city: formData.city,
+          district: formData.district,
+          state: 'Jammu and Kashmir',
+          postalCode: null,
+          country: 'India',
+        },
+        contact: {
+          phone: formData.phone || null,
+          whatsapp: null,
+          email: formData.email || null,
+          website: null,
+          socialLinks: {
+            facebook: null,
+            instagram: null,
+            youtube: null,
+            twitter: null,
+            linkedin: null,
+          },
+        },
+        sections: [],
+      });
+      
+      router.push(`/dashboard/pages/${pageId}/edit`);
+    } catch (error) {
+      console.error('Error creating page:', error);
+      alert('Failed to create page. Please try again.');
+    } finally {
+      setLoading(false);
     }
-
-    setSaving(true);
-    // TODO: Save to Firebase
-    setTimeout(() => {
-      setSaving(false);
-      router.push('/dashboard/pages');
-    }, 1000);
   };
 
-  const handleSuggestionClick = (suggestion: string) => {
-    setFormData({ ...formData, slug: suggestion });
-  };
+  const categories = [
+    { value: 'restaurant', label: '🍽️ Restaurant' },
+    { value: 'hotel', label: '🏨 Hotel' },
+    { value: 'shop', label: '🛍️ Shop' },
+    { value: 'service', label: '🔧 Service' },
+    { value: 'healthcare', label: '⚕️ Healthcare' },
+    { value: 'education', label: '📚 Education' },
+    { value: 'artisan', label: '🎨 Artisan' },
+    { value: 'professional', label: '💼 Professional' },
+    { value: 'tourism', label: '🗺️ Tourism' },
+    { value: 'other', label: '📋 Other' },
+  ];
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Create New Page</h1>
-        <p className="text-gray-600 mt-2">
-          Build your landing page from scratch or use a template
-        </p>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Dashboard
+          </Link>
+          <h1 className="text-3xl font-bold text-gray-900">Create New Page</h1>
+          <p className="text-gray-600 mt-1">Set up your business page in minutes</p>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Basic Information
-          </h2>
-
-          <div className="space-y-4">
+      {/* Form */}
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 shadow-sm">
+          <div className="p-8 space-y-6">
+            {/* Basic Info */}
             <div>
-              <Input
-                label="Page Title"
-                placeholder="My Business Name"
-                value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
-                required
-              />
-            </div>
-
-            <div>
-              <div className="relative">
-                <Input
-                  label="URL Slug"
-                  placeholder="my-business"
-                  value={formData.slug}
-                  onChange={(e) =>
-                    setFormData({ ...formData, slug: e.target.value })
-                  }
-                  helperText="This will be your page URL: kashpages.com/my-business"
-                  required
-                  rightIcon={
-                    checkingSlug ? (
-                      <Loader className="h-4 w-4 animate-spin text-gray-400" />
-                    ) : slugStatus.available === true ? (
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                    ) : slugStatus.available === false ? (
-                      <XCircle className="h-4 w-4 text-red-500" />
-                    ) : null
-                  }
-                />
-              </div>
-
-              {/* Slug Status Message */}
-              {slugStatus.message && (
-                <div
-                  className={`mt-2 text-sm flex items-center ${
-                    slugStatus.available ? 'text-green-600' : 'text-red-600'
-                  }`}
-                >
-                  {slugStatus.available ? (
-                    <CheckCircle className="h-4 w-4 mr-1" />
-                  ) : (
-                    <XCircle className="h-4 w-4 mr-1" />
-                  )}
-                  {slugStatus.message}
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Basic Information</h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Business Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="e.g., Kashmiri Wazwan Restaurant"
+                  />
                 </div>
-              )}
 
-              {/* Alternative Suggestions */}
-              {suggestions.length > 0 && (
-                <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <p className="text-sm font-medium text-yellow-800 mb-2">
-                    Try these available alternatives:
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {suggestions.map((suggestion) => (
-                      <button
-                        key={suggestion}
-                        type="button"
-                        onClick={() => handleSuggestionClick(suggestion)}
-                        className="px-3 py-1 bg-white border border-yellow-300 text-sm text-yellow-800 rounded hover:bg-yellow-100 transition-colors"
-                      >
-                        {suggestion}
-                      </button>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Description
+                  </label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Tell customers about your business..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Category *
+                  </label>
+                  <select
+                    required
+                    value={formData.category}
+                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    {categories.map((cat) => (
+                      <option key={cat.value} value={cat.value}>
+                        {cat.label}
+                      </option>
                     ))}
-                  </div>
+                  </select>
                 </div>
-              )}
+              </div>
             </div>
 
-            <div>
-              <Select
-                label="Category"
-                options={[
-                  { value: '', label: 'Select a category' },
-                  { value: 'restaurant', label: 'Restaurant' },
-                  { value: 'retail', label: 'Retail' },
-                  { value: 'services', label: 'Services' },
-                  { value: 'hospitality', label: 'Hospitality' },
-                ]}
-                value={formData.category}
-                onChange={(e) =>
-                  setFormData({ ...formData, category: e.target.value })
-                }
-                required
-              />
+            {/* Location */}
+            <div className="pt-6 border-t">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Location</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    City *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="e.g., Srinagar"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    District *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.district}
+                    onChange={(e) => setFormData({ ...formData, district: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="e.g., Srinagar"
+                  />
+                </div>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description
-              </label>
-              <textarea
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                rows={4}
-                placeholder="Brief description of your business..."
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-              />
+            {/* Contact */}
+            <div className="pt-6 border-t">
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Contact Information</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="+91 ..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="business@example.com"
+                  />
+                </div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex justify-end space-x-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.back()}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            leftIcon={<Eye className="h-4 w-4" />}
-          >
-            Preview
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            leftIcon={<Save className="h-4 w-4" />}
-            loading={saving}
-            disabled={!slugStatus.available || checkingSlug}
-          >
-            Save as Draft
-          </Button>
-        </div>
-      </form>
+          {/* Footer */}
+          <div className="px-8 py-6 bg-gray-50 border-t rounded-b-xl flex items-center justify-between">
+            <p className="text-sm text-gray-600">
+              You can add more details and customize your page after creation
+            </p>
+            <button
+              type="submit"
+              disabled={loading}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Save className="w-5 h-5" />
+                  Create Page
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }
