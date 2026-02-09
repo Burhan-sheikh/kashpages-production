@@ -2,14 +2,20 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: [
-      'images.unsplash.com',
-      'res.cloudinary.com',
-      'firebasestorage.googleapis.com',
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com',
+      },
     ],
-  },
-  experimental: {
-    serverActions: true,
   },
 }
 

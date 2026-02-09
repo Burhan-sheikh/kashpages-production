@@ -1,4 +1,6 @@
-import { initializeApp, getApps, cert } from 'firebase/app';
+'use client';
+
+import { initializeApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
@@ -14,13 +16,19 @@ const firebaseConfig = {
   databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
 };
 
-// Initialize Firebase
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+// Initialize Firebase only on client side
+let app;
+let auth;
+let db;
+let storage;
+let rtdb;
 
-// Initialize services
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
-export const rtdb = getDatabase(app);
+if (typeof window !== 'undefined') {
+  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+  auth = getAuth(app);
+  db = getFirestore(app);
+  storage = getStorage(app);
+  rtdb = getDatabase(app);
+}
 
-export default app;
+export { app, auth, db, storage, rtdb };
