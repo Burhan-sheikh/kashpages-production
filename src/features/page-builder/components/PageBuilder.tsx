@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Page, Section, SectionType } from '../types';
 import { SectionLibrary } from './SectionLibrary';
 import { SectionEditor } from './SectionEditor';
