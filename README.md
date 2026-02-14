@@ -1,295 +1,368 @@
-# KashPages - Business Landing Page Builder for Kashmir
+# Kashpages Production
 
-A modern, full-featured platform for creating beautiful business landing pages with drag-and-drop page builder, analytics, and search capabilities.
+**Go-Live Business Presence Platform for Kashmir**
 
-## Features
+A production-grade SaaS platform enabling Kashmir businesses to create, customize, and publish professional single-page websites instantly with schema-driven templates, optional AI assistants, and custom domain support.
 
-### 🎨 Page Builder
-- Drag-and-drop section reordering
-- 18+ pre-built section types (Hero, About, Services, Gallery, etc.)
-- Real-time preview (desktop & mobile)
-- Design customization (colors, fonts, themes)
-- Section-level visibility controls
+---
 
-### 🔍 Search & Discovery
-- Full-text search with Typesense
-- Category and location filtering
-- Faceted search with autocomplete
-- Featured and trending pages
+## 🌟 Vision
 
-### 📊 Analytics Dashboard
-- Views and visitor tracking
-- Device and location breakdown
-- Time-series charts
-- Engagement metrics
+Kashpages empowers Kashmir businesses to establish an online presence without technical expertise. Users select a template, customize structured content, optionally train an AI assistant, and publish instantly—subject to admin governance for quality assurance.
 
-### 👥 User Features
-- User dashboard for managing pages
-- Publish/draft workflow
-- Custom domain support (coming soon)
+**This is NOT an open HTML builder.**  
+It is a schema-driven, security-first platform with strict component whitelisting.
+
+---
+
+## 🚀 Key Features
+
+### For Creators
+- **Template Gallery**: 50 professionally designed templates across 7 categories
+- **Visual Page Builder**: Drag-and-drop sections and elements with live preview
+- **Content Customization**: Edit text, images, colors, and layout within schema constraints
+- **AI Assistant**: Optional floating chat widget trained on business-specific knowledge
+- **SEO Optimization**: Full meta tag control, Open Graph, and Twitter cards
+- **Revision History**: Track changes and restore previous versions
+- **Custom Domains**: Connect your own domain (Business plan)
+- **Analytics**: Track views, visitors, referrers, and devices
+
+### For Visitors
+- **Single-Page Sites**: Fast-loading, mobile-responsive business pages
+- **No Authentication**: Public pages are fully accessible without login
+- **AI Chat**: Get instant answers about the business (if enabled)
+- **Contact Info**: Direct access to phone, email, WhatsApp, and social links
+
+### For Admins
+- **Content Moderation**: Approve or reject pages before going live
+- **User Management**: Suspend accounts, manage plans, and roles
+- **Template Management**: Add, edit, and organize templates
+- **System Configuration**: Manage AI API keys and payment credentials securely
+- **Platform Analytics**: Monitor usage, revenue, and user activity
+
+---
+
+## 🛠 Tech Stack
+
+### Frontend
+- **Next.js 14** (App Router) - React framework
+- **TypeScript** - Type safety
+- **Tailwind CSS** - Utility-first styling
+- **Framer Motion** - Animations
+
+### Backend & Infrastructure
+- **Firebase Auth** - Email/password, Google, phone authentication
+- **Firestore** - NoSQL database for structured data
+- **Realtime Database** - Real-time features
+- **Firebase Storage** - Image and file uploads
+- **Firebase Functions** - Server-side logic
+- **Firebase Data Connect** - PostgreSQL integration
+
+### Key Libraries
+- **react-beautiful-dnd** or **dnd-kit** - Drag-and-drop
+- **zod** - Schema validation
+- **date-fns** - Date utilities
+
+---
+
+## 📁 Project Structure
+
+```
+kashpages-production/
+├── src/
+│   ├── app/                  # Next.js 14 App Router pages
+│   │   ├── (auth)/          # Auth pages (login, signup)
+│   │   ├── (dashboard)/     # User dashboard
+│   │   ├── (public)/        # Marketing pages
+│   │   ├── admin/           # Admin panel
+│   │   ├── builder/         # Page builder interface
+│   │   └── api/             # API routes
+│   ├── components/          # Reusable React components
+│   │   ├── ui/             # Base UI components
+│   │   ├── builder/        # Builder-specific components
+│   │   ├── sections/       # Section library
+│   │   └── elements/       # Element library
+│   ├── contexts/           # React contexts (Auth, Builder)
+│   ├── hooks/              # Custom React hooks
+│   ├── lib/                # Core utilities
+│   │   ├── firebase/       # Firebase config and helpers
+│   │   └── utils/          # Utility functions
+│   ├── services/           # Business logic and Firebase operations
+│   ├── types/              # TypeScript type definitions
+│   └── styles/             # Global styles
+├── functions/              # Firebase Cloud Functions
+├── firestore.rules         # Firestore security rules
+├── firestore.indexes.json  # Database indexes
+├── database.rules.json     # Realtime DB rules
+├── .env.example            # Environment variables template
+├── ROADMAP.md              # Implementation roadmap
+└── README.md               # This file
+```
+
+---
+
+## 🔐 Security Architecture
+
+### Client-Side
+- **No secrets in browser**: All API keys stored server-side
+- **Content sanitization**: XSS prevention on all user inputs
+- **URL validation**: Prevent javascript:, data:, and dangerous protocols
+- **Rate limiting**: Protect against abuse
+
+### Server-Side
+- **Firebase Admin SDK**: Privileged operations via Cloud Functions
+- **Firestore Rules**: Owner-only access with admin override
+- **Authentication**: Firebase Auth with token verification
+- **Input validation**: Strict schema validation on all endpoints
+
+### Data Protection
+- **Environment separation**: Dev, staging, production
+- **Encrypted credentials**: Payment and AI API keys encrypted at rest
+- **User privacy**: Personal data protected per GDPR principles
+
+---
+
+## 🎨 Design Principles
+
+### Schema-Driven Content
+- **Strict component whitelist**: Only approved sections and elements
+- **No arbitrary HTML**: Everything validated against schema
+- **Predictable rendering**: Consistent output across all pages
+
+### User Experience
+- **World-class SaaS feel**: High polish and attention to detail
+- **Animations**: Smooth transitions using Framer Motion
+- **Loading states**: Skeletons and spinners for async operations
+- **Error handling**: Toast notifications and error boundaries
+- **Responsive**: Mobile-first design
+
+### Performance
+- **Optimized images**: Next.js Image component
+- **Code splitting**: Lazy loading of heavy components
+- **CDN delivery**: Firebase Hosting with global edge network
+- **Efficient queries**: Firestore indexing and pagination
+
+---
+
+## 📊 Data Models
+
+### Users
+```typescript
+{
+  uid: string
+  email: string
+  displayName: string
+  role: 'guest' | 'user' | 'admin'
+  plan: 'free' | 'starter' | 'business'
+  status: 'active' | 'suspended'
+}
+```
+
+### Pages
+```typescript
+{
+  id: string
+  ownerId: string
+  title: string
+  slug: string
+  status: 'draft' | 'pending' | 'published'
+  contentSchema: ContentSchema
+  seo: SEOMetadata
+  aiConfig?: AIConfig
+}
+```
+
+### Templates
+```typescript
+{
+  id: string
+  name: string
+  category: 'agency' | 'ecommerce' | 'landing' | ...
+  plan: 'free' | 'starter' | 'business'
+  schema: ContentSchema
+}
+```
+
+See `src/types/` for complete type definitions.
+
+---
+
+## 💰 Pricing Plans
+
+### Free (₹0/month)
+- 1 page
+- Basic templates
+- Basic widgets
+- Community support
+
+### Starter (₹499/month)
+- 10 pages
+- Starter templates
+- Starter widgets
 - SEO optimization
+- Analytics
+- Priority support
+- Version history
 
-### 🛡️ Admin Panel
-- Content moderation interface
-- Pending approvals workflow
-- Report handling
-- User management
+### Business (₹2,499/month)
+- Unlimited pages
+- All templates
+- All widgets
+- Advanced analytics
+- **Custom domain**
+- **Remove branding**
+- AI assistant
+- Priority support
 
-## Tech Stack
+---
 
-- **Framework:** Next.js 14 (App Router)
-- **Language:** TypeScript
-- **Styling:** Tailwind CSS
-- **Database:** Firebase Firestore
-- **Authentication:** Firebase Auth
-- **Search:** Typesense
-- **Storage:** Cloudinary
-- **Charts:** Recharts
-- **Drag & Drop:** react-beautiful-dnd
-
-## Getting Started
+## 🚦 Getting Started
 
 ### Prerequisites
-
-- Node.js 18+ installed
-- Firebase project created
-- Typesense instance (Cloud or self-hosted)
-- Cloudinary account
+- Node.js 18+
+- npm or yarn
+- Firebase account
+- Git
 
 ### Installation
 
 1. **Clone the repository**
-
 ```bash
 git clone https://github.com/Burhan-sheikh/kashpages-production.git
 cd kashpages-production
 ```
 
 2. **Install dependencies**
-
 ```bash
 npm install
 ```
 
-3. **Set up environment variables**
-
+3. **Configure environment variables**
 ```bash
-cp .env.local.example .env.local
+cp .env.example .env.local
 ```
 
-Edit `.env.local` and fill in your credentials:
+Edit `.env.local` with your Firebase credentials.
 
-```env
-# Firebase
-NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
-# ... (see .env.example for complete list)
-
-# Typesense
-NEXT_PUBLIC_TYPESENSE_HOST=localhost
-NEXT_PUBLIC_TYPESENSE_PORT=8108
-NEXT_PUBLIC_TYPESENSE_PROTOCOL=http
-NEXT_PUBLIC_TYPESENSE_API_KEY=xyz
-
-# Cloudinary
-NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your_cloud_name
-NEXT_PUBLIC_CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_secret
-```
-
-4. **Run Typesense locally (optional)**
-
-```bash
-# Using Docker
-docker run -d -p 8108:8108 \
-  -v/tmp/typesense-data:/data \
-  typesense/typesense:0.25.2 \
-  --data-dir /data \
-  --api-key=xyz \
-  --enable-cors
-```
-
-Or use Typesense Cloud: https://cloud.typesense.org/
-
-5. **Run the development server**
-
+4. **Start development server**
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-## Project Structure
-
+5. **Open browser**
 ```
-kashpages-production/
-├── src/
-│   ├── app/
-│   │   ├── (public)/          # Public-facing pages
-│   │   │   ├── page.tsx         # Homepage
-│   │   │   ├── explore/         # Browse pages
-│   │   │   ├── category/        # Category pages
-│   │   │   └── location/        # Location pages
-│   │   ├── (dashboard)/       # User dashboard
-│   │   │   └── dashboard/
-│   │   │       ├── page.tsx     # Main dashboard
-│   │   │       └── pages/[id]/
-│   │   │           ├── edit/    # Page editor
-│   │   │           └── analytics/ # Analytics
-│   │   └── (admin)/          # Admin panel
-│   │       └── admin/
-│   ├── components/
-│   │   └── ui/              # Reusable UI components
-│   ├── features/
-│   │   └── page-builder/    # Page builder components
-│   ├── lib/
-│   │   ├── firebase/        # Firebase configuration
-│   │   └── search/          # Typesense integration
-│   └── types/              # TypeScript types
-├── public/                # Static assets
-├── .env.example           # Example environment variables
-├── .env.local.example     # Minimal local setup
-├── package.json
-└── README.md
+http://localhost:3000
 ```
 
-## Configuration
-
-### Firebase Setup
-
-1. Create a Firebase project at https://console.firebase.google.com/
-2. Enable Authentication (Email/Password, Google, etc.)
-3. Create a Firestore database
-4. Set up security rules (see `firestore.rules`)
-5. Copy configuration to `.env.local`
-
-### Typesense Setup
-
-**Option 1: Typesense Cloud (Recommended)**
-
-1. Sign up at https://cloud.typesense.org/
-2. Create a new cluster
-3. Copy credentials to `.env.local`
-
-**Option 2: Self-hosted**
-
-```bash
-# Run with Docker
-docker run -d -p 8108:8108 \
-  -v/tmp/typesense-data:/data \
-  typesense/typesense:0.25.2 \
-  --data-dir /data \
-  --api-key=xyz \
-  --enable-cors
-```
-
-### Cloudinary Setup
-
-1. Sign up at https://cloudinary.com/
-2. Go to Dashboard > Settings
-3. Create an unsigned upload preset:
-   - Settings > Upload > Upload presets
-   - Add upload preset
-   - Set mode to "Unsigned"
-   - Save preset name
-4. Copy credentials to `.env.local`
-
-## Deployment
-
-### Vercel (Recommended)
-
-1. Push code to GitHub
-2. Import project in Vercel
-3. Add environment variables
-4. Deploy
-
-### Netlify
-
-1. Connect repository
-2. Build command: `npm run build`
-3. Publish directory: `.next`
-4. Add environment variables
-5. Deploy
-
-### Docker
-
-```bash
-# Build image
-docker build -t kashpages .
-
-# Run container
-docker run -p 3000:3000 --env-file .env.local kashpages
-```
-
-## Environment Variables
-
-See `.env.example` for a complete list of available environment variables.
-
-**Required:**
-- Firebase credentials
-- Typesense configuration
-- Cloudinary credentials
-- App URL
-
-**Optional:**
-- Email service (SendGrid, Resend, SMTP)
-- Payment gateway (Stripe, Razorpay)
-- Analytics (Google Analytics, Vercel Analytics)
-- Social OAuth providers
-- SMS service (Twilio)
-- Maps API (Google Maps, Mapbox)
-
-## Scripts
-
-```bash
-# Development
-npm run dev
-
-# Build for production
-npm run build
-
-# Start production server
-npm start
-
-# Lint code
-npm run lint
-
-# Type check
-npm run type-check
-```
-
-## Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-MIT License - see LICENSE file for details
-
-## Support
-
-For issues and questions:
-- GitHub Issues: https://github.com/Burhan-sheikh/kashpages-production/issues
-- Email: support@kashpages.com
-
-## Roadmap
-
-- [ ] Custom domain support
-- [ ] Email templates
-- [ ] WhatsApp integration
-- [ ] Multi-language support
-- [ ] Advanced SEO tools
-- [ ] Team collaboration
-- [ ] API access
-- [ ] Mobile app
+For detailed setup instructions, see [INSTALLATION.md](./INSTALLATION.md)
 
 ---
 
-Built with ❤️ in Kashmir
+## 📖 Documentation
+
+- **[Installation Guide](./INSTALLATION.md)** - Detailed setup instructions
+- **[Firebase Setup](./FIREBASE_SETUP.md)** - Firebase configuration
+- **[Deployment Guide](./DEPLOYMENT.md)** - Production deployment
+- **[Architecture Overview](./ARCHITECTURE.md)** - System design
+- **[Features Documentation](./FEATURES.md)** - Feature specifications
+- **[Roadmap](./ROADMAP.md)** - Implementation plan
+- **[Development Workflow](./DEVELOPMENT_WORKFLOW.md)** - Development guide
+
+---
+
+## 🧪 Testing
+
+```bash
+# Run unit tests
+npm run test
+
+# Run integration tests
+npm run test:integration
+
+# Run E2E tests
+npm run test:e2e
+
+# Coverage report
+npm run test:coverage
+```
+
+---
+
+## 🚀 Deployment
+
+### Firebase Hosting
+
+```bash
+# Build for production
+npm run build
+
+# Deploy to Firebase
+firebase deploy
+```
+
+### Vercel (Alternative)
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
+vercel
+```
+
+For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md)
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please follow these guidelines:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+Please ensure:
+- Code follows ESLint and Prettier rules
+- All tests pass
+- Documentation is updated
+
+---
+
+## 📄 License
+
+This project is proprietary software. All rights reserved.
+
+---
+
+## 🙏 Acknowledgments
+
+- Built with ❤️ for Kashmir businesses
+- Inspired by the need for accessible online presence
+- Powered by Firebase and Next.js
+
+---
+
+## 📞 Support
+
+- **Documentation**: See docs folder
+- **Issues**: [GitHub Issues](https://github.com/Burhan-sheikh/kashpages-production/issues)
+- **Email**: support@kashpages.com (when live)
+
+---
+
+## 🎯 Success Definition
+
+**A user should be able to go from signup → template selection → edit → publish without assistance.**
+
+The system must be:
+- ✅ Deployable
+- ✅ Secure
+- ✅ Extensible
+- ✅ User-friendly
+
+---
+
+**Built by developers, for businesses in Kashmir. 🇮🇳**
