@@ -1,23 +1,27 @@
-import * as admin from 'firebase-admin';
+// Firebase Admin SDK initialization
+import { initializeApp, getApps, cert, App } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
 
-if (!admin.apps.length) {
-  try {
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      }),
+let adminApp: App;
+
+export function initAdmin() {
+  if (getApps().length === 0) {
+    const serviceAccount = JSON.parse(
+      process.env.FIREBASE_SERVICE_ACCOUNT_KEY || '{}'
+    );
+
+    adminApp = initializeApp({
+      credential: cert(serviceAccount),
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
       databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
     });
-  } catch (error: any) {
-    console.error('Firebase admin initialization error', error.stack);
+  } else {
+    adminApp = getApps()[0];
   }
+
+  return adminApp;
 }
 
-export const adminAuth = admin.auth();
-export const adminDb = admin.firestore();
-export const adminStorage = admin.storage();
-export const adminRtdb = admin.database();
-
-export default admin;
+export const adminAuth = () => getAuth(initAdmin());
+export const adminDb = () => getFirestore(initAdmin());
