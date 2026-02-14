@@ -1,47 +1,25 @@
-// KashPages Firestore Collections
+// Firestore Collection References
+// Centralized collection names with type safety
 
 export const COLLECTIONS = {
-  // Core
   USERS: 'users',
   PAGES: 'pages',
-  
-  // Discovery
-  CATEGORIES: 'categories',
-  LOCATIONS: 'locations',
-  
-  // Moderation
-  REPORTS: 'reports',
-  PENDING_APPROVALS: 'pending_approvals',
-  
-  // Analytics
-  ANALYTICS: 'analytics',
-  PAGE_ANALYTICS: 'page_analytics',
-  
-  // Reviews (Future)
-  REVIEWS: 'reviews',
-  
-  // Admin
-  HOMEPAGE_BLOCKS: 'homepage_blocks',
-  AUDIT_LOGS: 'audit_logs',
-  
-  // Marketing
-  PLANS: 'plans',
+  TEMPLATES: 'templates',
+  REVISIONS: 'revisions',
   SUBSCRIPTIONS: 'subscriptions',
-  
-  // Notifications
-  NOTIFICATIONS: 'notifications',
+  CUSTOM_DOMAINS: 'customDomains',
+  SYSTEM_SETTINGS: 'systemSettings',
+  PAGE_ANALYTICS: 'pageAnalytics',
+  AI_KNOWLEDGE_CARDS: 'aiKnowledgeCards',
+  AI_CONVERSATIONS: 'aiConversations',
+  PAYMENT_INTENTS: 'paymentIntents',
+  USER_SETTINGS: 'userSettings',
 } as const;
 
-// Re-export enums from platform types
-export { UserRole, PageStatus, PlanType, ReportStatus } from '@/types/platform';
+export type CollectionName = typeof COLLECTIONS[keyof typeof COLLECTIONS];
 
-// Re-export main types
-export type {
-  UserProfile,
-  PageDocument,
-  Category,
-  Location,
-  Report,
-  PageAnalytics,
-  HomepageBlock,
-} from '@/types/platform';
+// Subcollections
+export const SUBCOLLECTIONS = {
+  PAGE_REVISIONS: 'revisions',
+  PAGE_ANALYTICS: 'analytics',
+} as const;
